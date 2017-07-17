@@ -1,0 +1,12 @@
+[
+  {
+    "name": "Test",
+    "path": "/usr/bin/true",
+    "big": 7,
+    "small": 0
+  },
+  {
+    "name": "Test2",
+    "path": "/usr/bin/false"
+  }
+]
