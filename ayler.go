@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"os/exec"
 )
 
 // use json for config
@@ -112,4 +113,15 @@ func main() {
 
 	fmt.Println("Runing processes")
 
+	for _, pinfo := range PTable {
+
+		if pinfo.Path != "" {
+			bob, err := exec.LookPath(pinfo.Path)
+			if err != nil {
+				fmt.Println("error with path ", pinfo.Path)
+			}
+
+			fmt.Printf("Running %s\n", bob)
+		}
+	}
 }
