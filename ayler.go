@@ -34,6 +34,12 @@ func linesep() {
 	}
 }
 
+func dprint(a ...interface{}) {
+	if DEBUG {
+		fmt.Println(a...)
+	}
+}
+
 const (
 	state_pre_run = 0
 	//state_run     = 1
@@ -51,7 +57,7 @@ type Process struct {
 func cTable2pTable(ctable []interface{}, ptable []Process) error {
 
 	for i, pinfo := range ctable {
-		var xinfo = pinfo.(map[string]interface{})
+		xinfo := pinfo.(map[string]interface{})
 
 		ptable[i].Name = xinfo["name"].(string)
 		ptable[i].Path = xinfo["path"].(string)
@@ -74,6 +80,9 @@ func cTable2pTable(ctable []interface{}, ptable []Process) error {
 		fmt.Println("ptable")
 		linesep()
 		for i, pt := range ptable {
+			if pt.Path == "" {
+				break
+			}
 			fmt.Println(i)
 			fmt.Println(pt)
 		}
@@ -86,42 +95,35 @@ func cTable2pTable(ctable []interface{}, ptable []Process) error {
 // cTable -> unmarshalled json data
 // pTable -> the actual table used by ayler to manage everything
 func main() {
+	// PTable => process table
 	var PTable []Process
 	PTable = make([]Process, 10)
+	// CTable => config table
 	var CTable []interface{}
 
-	var err error
-	var conf []byte
-
-	fmt.Println("Reding configuration")
-	conf, err = ioutil.ReadFile("proc.json")
+	dprint("Reading configuration")
+	conf, err := ioutil.ReadFile("proc.json")
 
 	if err != nil {
-		fmt.Println("\t ReadFile Error")
-		fmt.Println("\t", err)
+		fmt.Println("\t ReadFile Error\t", err)
 	}
 
 	err = json.Unmarshal(conf, &CTable)
 	if err != nil {
-		fmt.Println("\t Unmarshal Error")
-		fmt.Println("\t", err)
+		fmt.Println("\t Unmarshal Error\t", err)
 	}
 
-	linesep()
 	cTable2pTable(CTable, PTable)
-	linesep()
 
-	fmt.Println("Runing processes")
+	dprint("Runing processes")
 
 	for _, pinfo := range PTable {
-
 		if pinfo.Path != "" {
-			bob, err := exec.LookPath(pinfo.Path)
+			newPath, err := exec.LookPath(pinfo.Path)
 			if err != nil {
-				fmt.Println("error with path ", pinfo.Path)
+				fmt.Println("\terror with path\t", pinfo.Path)
 			}
-
-			fmt.Printf("Running %s\n", bob)
+			dprint("Running", newPath)
 		}
 	}
 }

@@ -8,5 +8,10 @@
   {
     "name": "Test2",
     "path": "/usr/bin/false"
+  },
+  {
+    "name": "test3",
+    "path": "/bin/ls"
   }
+
 ]
