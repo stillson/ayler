@@ -7,8 +7,6 @@ import (
 	"os/exec"
 )
 
-// use json for config
-
 /*
 null
 bool
@@ -25,7 +23,9 @@ process is a k/v
 }
 */
 
-const DEBUG = true
+const (
+	DEBUG = true
+)
 
 // for debugging output
 func linesep() {
@@ -42,29 +42,31 @@ func dprint(a ...interface{}) {
 
 const (
 	state_pre_run = 0
-	//state_run     = 1
-	//state_err     = 2
-	//state_stopped = 3
+	state_run     = 1
+	state_err     = 2
+	state_stopped = 3
 )
 
 // a processes managed ayler
 type Process struct {
-	Name  string //Simple name
-	Path  string //path to executable
-	state int    //State of process...
+	Name    string   //Simple name
+	Path    string   //path to executable
+	state   int      //State of process...
+	cmd     exec.Cmd //the go interface command
+	io_chan chan int
 }
 
 func cTable2pTable(ctable []interface{}, ptable []Process) error {
 
 	for i, pinfo := range ctable {
 		xinfo := pinfo.(map[string]interface{})
-
 		ptable[i].Name = xinfo["name"].(string)
 		ptable[i].Path = xinfo["path"].(string)
 		ptable[i].state = state_pre_run
+		ptable[i].io_chan = make(chan int)
 	}
 
-	if DEBUG {
+	if false {
 		linesep()
 		fmt.Println("ctable\n")
 		linesep()
@@ -83,13 +85,19 @@ func cTable2pTable(ctable []interface{}, ptable []Process) error {
 			if pt.Path == "" {
 				break
 			}
+
 			fmt.Println(i)
 			fmt.Println(pt)
 		}
 		linesep()
 	}
-
 	return nil
+}
+
+// run a process in a goroutine
+func run_process(cmd exec.Cmd, stat_chan chan int) {
+	cmd.Run()
+	stat_chan <- state_stopped
 }
 
 // cTable -> unmarshalled json data
@@ -122,8 +130,28 @@ func main() {
 			newPath, err := exec.LookPath(pinfo.Path)
 			if err != nil {
 				fmt.Println("\terror with path\t", pinfo.Path)
+				pinfo.state = state_err
+				continue
 			}
+			pinfo.cmd.Path = newPath
 			dprint("Running", newPath)
+			go run_process(pinfo.cmd, pinfo.io_chan)
+			pinfo.state = state_run
 		}
 	}
+
+	// select on all the pinfo channels
+	for {
+		for _, pinfo := range PTable {
+			if pinfo.Path != "" {
+				select {
+				case rv := <-pinfo.io_chan:
+					pinfo.state = rv
+				default:
+					//nothing
+				}
+			}
+		}
+	}
+
 }
