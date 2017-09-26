@@ -7,22 +7,6 @@ import (
 	"os/exec"
 )
 
-/*
-null
-bool
-float
-string
-array
-k/v (map)(string key, any val (islk))
-
-process is a k/v
-
-{
-"name":"web",
-"path":"/usr/local/bin/nginx"
-}
-*/
-
 const (
 	DEBUG = true
 )
@@ -47,13 +31,13 @@ const (
 	state_stopped = 3
 )
 
-// a processes managed ayler
+// a processes managed by ayler
 type Process struct {
-	Name    string   //Simple name
-	Path    string   //path to executable
-	state   int      //State of process...
-	cmd     exec.Cmd //the go interface command
-	io_chan chan int
+	Name    string   // Simple name
+	Path    string   // path to executable
+	state   int      // State of process...
+	cmd     exec.Cmd // the go interface command
+	io_chan chan int // the
 }
 
 func cTable2pTable(ctable []interface{}, ptable []Process) error {
@@ -104,21 +88,23 @@ func run_process(cmd exec.Cmd, stat_chan chan int) {
 // pTable -> the actual table used by ayler to manage everything
 func main() {
 	// PTable => process table
-	var PTable []Process
-	PTable = make([]Process, 10)
+	PTable := make([]Process, 10)
 	// CTable => config table
 	var CTable []interface{}
 
 	dprint("Reading configuration")
+
 	conf, err := ioutil.ReadFile("proc.json")
 
 	if err != nil {
 		fmt.Println("\t ReadFile Error\t", err)
+		return
 	}
 
 	err = json.Unmarshal(conf, &CTable)
 	if err != nil {
 		fmt.Println("\t Unmarshal Error\t", err)
+		return
 	}
 
 	cTable2pTable(CTable, PTable)
